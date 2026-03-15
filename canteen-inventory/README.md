@@ -57,3 +57,37 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+Follow these steps to get the project running on your local machine.
+
+### 1. Prerequisites
+Ensure you have the following installed:
+* **PHP** (8.2 or higher)
+* **Composer**
+* **Node.js** & **npm**
+* **MySQL** or **SQLite**
+
+---
+
+### 2. Backend Setup (Laravel)
+Navigate to the backend directory and initialize the server:
+
+```bash
+cd canteen-inventory
+
+composer install
+
+cp .env.example .env
+
+php artisan key:generate
+
+php artisan migrate --seed
+
+php artisan serve
+
+# Go to frontend folder
+cd canteen-frontend
+
+npm install
+
+npm run dev
