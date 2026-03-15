@@ -2,35 +2,48 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\MenuController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-// Public Auth route
+// Public routes
 Route::post('/login', [AuthController::class, 'login']);
 
-// Protected routes
+// Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
     
-    // --- Admin Access ---
+    // Shared Logout
+    Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // Shared Menu & Categories (Accessible by all authenticated roles)
+    Route::get('/menu', [MenuController::class, 'index']);
+    Route::get('/categories', [MenuController::class, 'getCategories']);
+
+    // --- ADMIN & CASHIER ACCESS ---
+    Route::middleware('role:admin,cashier')->group(function () {
+        Route::post('/menu', [MenuController::class, 'store']);
+        Route::put('/menu/{id}', [MenuController::class, 'update']);
+        Route::delete('/menu/{id}', [MenuController::class, 'destroy']);
+        
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+    });
+
+    // --- ADMIN ONLY ACCESS ---
     Route::middleware('role:admin')->group(function () {
-        Route::apiResource('menu', MenuController::class); // Full CRUD for menu [cite: 36]
-        Route::patch('/menu/{id}/toggle', [MenuController::class, 'toggleAvailability']); // Toggle availability 
-        Route::get('/reports', [ReportController::class, 'getSalesReports']); // Sales dashboard 
-        Route::patch('/inventory/{id}', [InventoryController::class, 'updateStock']); // Adjust stock 
+        Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
+        Route::patch('/menu/{id}/toggle', [MenuController::class, 'toggleAvailability']);
+        Route::get('/inventory', [InventoryController::class, 'index']);
+        Route::patch('/inventory/{id}/update', [InventoryController::class, 'updateStock']);
+        Route::get('/reports', [ReportController::class, 'getSalesReports']);
     });
 
-    // --- Cashier Access ---
-    Route::middleware('role:cashier')->group(function () {
-        Route::post('/orders', [OrderController::class, 'store']); // Order processing [cite: 44]
-        Route::get('/menu', [MenuController::class, 'index']); // Menu viewing [cite: 20]
-    });
-
-    // --- Customer Access ---
+    // --- CUSTOMER ACCESS ---
     Route::middleware('role:customer')->group(function () {
-        Route::get('/menu', [MenuController::class, 'index']); // Browse menu [cite: 21]
-        Route::get('/orders/history', [OrderController::class, 'index']); // View history [cite: 21]
+        Route::post('/customer/orders', [OrderController::class, 'store']);
+        Route::get('/customer/orders/history', [OrderController::class, 'myOrders']);
     });
 });
